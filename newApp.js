@@ -14,7 +14,7 @@ const oAuth2Client = new OAuth2(
 
 const calendar = google.calendar({
   version: "v3",
-  auth: "AIzaSyBGI9YoqJ1C6KWcO_hlJLYkJDV7WxQdToc",
+  auth: process.env.CALENDAR_API_KEY,
 });
 app.get("/signIn", (req, res) => {
   const url = oAuth2Client.generateAuthUrl({
@@ -45,8 +45,7 @@ app.get("/auth/google/callback", async (req, res) => {
 
 app.post("/send_meet_invite", (req, res) => {
   oAuth2Client.setCredentials({
-    refresh_token:
-      "1//0gWvM58MpR40-CgYIARAAGBASNwF-L9IrIyxo7IrEoDmVEPt6TGkJ5soh5ZE5j225xKu_KvO86N8ISTXXQyFak2ZlhuBA-2yfgIs",
+    refresh_token:process.env.REFRESH_TOKEN
   });
   let { emailArr, startDate, endDate, description, location, summary } =
     req.body;
@@ -150,7 +149,7 @@ app.put("/edit_meet_link", async (req, res) => {
     const result = await calendar.events.patch({
       auth: oAuth2Client,
       calendarId: "primary",
-      eventId: "0b0h5ceg9kbtjmo2332pl3nha4",
+      eventId: eventId, 
       resource: updatedEvent,
     });
     console.log(result);
