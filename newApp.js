@@ -43,10 +43,12 @@ app.get("/auth/google/callback", async (req, res) => {
   }
 });
 
-app.post("/send_meet_invite", (req, res) => {
+app.post("/send_meet_invite", async (req, res) => {
+
   oAuth2Client.setCredentials({
-    refresh_token:process.env.REFRESH_TOKEN
+    refresh_token: process.env.REFRESH_TOKEN,
   });
+  
   let { emailArr, startDate, endDate, description, location, summary } =
     req.body;
 
@@ -86,30 +88,42 @@ app.post("/send_meet_invite", (req, res) => {
         },
         requestId: "unique",
       },
-    }
-  };
-
-  calendar.events.insert(
-    {
-      calendarId: "primary",
-      eventId: "asc3rd4",
-      resource: event,
-      conferenceDataVersion: 1,
-      sendNotifications: true,
-      auth: oAuth2Client,
     },
-    (err, event) => {
-      if (err) return console.error("Error Creating Calender Event:", err);
-      return console.log("Calendar event created.", event);
-    }
-  );
+  };
+  
+  const result = await calendar.events.list({
+    auth: oAuth2Client,
+    calendarId: "primary",
+    timeMin: eventStartTime,
+    timeMax: eventEndTime,
+    timeZone: "Asia/Kolkata",
+  });
+
+  if (result.data.items.length === 0) {
+    calendar.events.insert(
+      {
+        calendarId: "primary",
+        resource: event,
+        conferenceDataVersion: 1,
+        sendNotifications: true,
+        auth: oAuth2Client,
+      },
+      (err, event) => {
+        if (err) return console.error("Error Creating Calender Event:", err);
+        if (event.status == 200) {
+        res.send("Calendar event created.");
+        }
+      }
+    );
+  }else{
+    res.send("A calender Event is already exists at the same startDate and endDate.");
+  }
+
 });
 
 app.put("/edit_meet_link", async (req, res) => {
-  let { emailArr, startDate, endDate, description, location, summary } = req.body;
-  oAuth2Client.setCredentials({
-    refresh_token: process.env.REFRESH_TOKEN,
-  });
+  let { emailArr, startDate, endDate, description, location, summary } =
+    req.body;
 
   try {
     const attendees = emailArr.map((email) => {
@@ -149,33 +163,28 @@ app.put("/edit_meet_link", async (req, res) => {
     const result = await calendar.events.patch({
       auth: oAuth2Client,
       calendarId: "primary",
-      eventId: eventId, 
+      eventId: eventId,
       resource: updatedEvent,
     });
     console.log(result);
-    if(result.status === 200){
+    if (result.status === 200) {
       res.send("success update");
     }
-  
   } catch (error) {
     console.log(`Error at getEvents --> ${error}`);
     return 0;
   }
 });
 
-
 app.delete("/delete_meet_link", async (req, res) => {
-  oAuth2Client.setCredentials({
-    refresh_token: process.env.REFRESH_TOKEN,
-  });
   try {
-    let {eventId} = req.body;
+    let { eventId } = req.body;
     const result = await calendar.events.delete({
       auth: oAuth2Client,
       calendarId: "primary",
       eventId: eventId,
     });
-    if(result.status === 204){
+    if (result.status === 204) {
       res.send("success delete");
     }
   } catch (error) {
