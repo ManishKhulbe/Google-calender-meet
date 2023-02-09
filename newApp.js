@@ -45,10 +45,10 @@ app.get("/auth/google/callback", async (req, res) => {
 
 app.post("/send_meet_invite", async (req, res) => {
 
-  oAuth2Client.setCredentials({
-    refresh_token: process.env.REFRESH_TOKEN,
-  });
-  
+  // oAuth2Client.setCredentials({
+  //   refresh_token: process.env.REFRESH_TOKEN,
+  // });
+
   let { emailArr, startDate, endDate, description, location, summary } =
     req.body;
 
@@ -111,7 +111,12 @@ app.post("/send_meet_invite", async (req, res) => {
       (err, event) => {
         if (err) return console.error("Error Creating Calender Event:", err);
         if (event.status == 200) {
-        res.send("Calendar event created.");
+    
+          res.status(200).send(JSON.stringify({message : "event successFully created" , 
+          resObj:{
+            eventLink : event.data.hangoutLink,
+            responseID : event.data.id
+          }}));
         }
       }
     );
@@ -122,10 +127,13 @@ app.post("/send_meet_invite", async (req, res) => {
 });
 
 app.put("/edit_meet_link", async (req, res) => {
-  let { emailArr, startDate, endDate, description, location, summary } =
+  let { emailArr, startDate, endDate, description, location, summary  , eventId} =
     req.body;
 
   try {
+    // oAuth2Client.setCredentials({
+    //   refresh_token: process.env.REFRESH_TOKEN,
+    // });
     const attendees = emailArr.map((email) => {
       return { email: email };
     });
