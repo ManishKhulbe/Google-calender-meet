@@ -44,10 +44,9 @@ app.get("/auth/google/callback", async (req, res) => {
 });
 
 app.post("/send_meet_invite", async (req, res) => {
-
-  // oAuth2Client.setCredentials({
-  //   refresh_token: process.env.REFRESH_TOKEN,
-  // });
+  oAuth2Client.setCredentials({
+    refresh_token: process.env.REFRESH_TOKEN,
+  });
 
   let { emailArr, startDate, endDate, description, location, summary } =
     req.body;
@@ -76,7 +75,10 @@ app.post("/send_meet_invite", async (req, res) => {
     reminders: {
       useDefault: false,
       overrides: [
-        { method: "email", minutes: 24 * 60 },
+        {
+          method: "email",
+          minutes: 24 * 60
+        },
         { method: "popup", minutes: 10 },
       ],
     },
@@ -89,8 +91,13 @@ app.post("/send_meet_invite", async (req, res) => {
         requestId: "unique",
       },
     },
+    emailSettings: {
+      subject: "Custom Subject for Event Invitation",
+      replyTo: "manish.khulbe@mobcoder.com",
+      body: "This is a custom body for the event invitation email.",
+    },
   };
-  
+
   const result = await calendar.events.list({
     auth: oAuth2Client,
     calendarId: "primary",
@@ -107,28 +114,40 @@ app.post("/send_meet_invite", async (req, res) => {
         conferenceDataVersion: 1,
         sendNotifications: true,
         auth: oAuth2Client,
+        supportsAttachments: true,
       },
       (err, event) => {
         if (err) return console.error("Error Creating Calender Event:", err);
         if (event.status == 200) {
-    
-          res.status(200).send(JSON.stringify({message : "event successFully created" , 
-          resObj:{
-            eventLink : event.data.hangoutLink,
-            responseID : event.data.id
-          }}));
+          res.status(200).send(
+            JSON.stringify({
+              message: "event successFully created",
+              resObj: {
+                eventLink: event.data.hangoutLink,
+                responseID: event.data.id,
+              },
+            })
+          );
         }
       }
     );
-  }else{
-    res.send("A calender Event is already exists at the same startDate and endDate.");
+  } else {
+    res.send(
+      "A calender Event is already exists at the same startDate and endDate."
+    );
   }
-
 });
 
 app.put("/edit_meet_link", async (req, res) => {
-  let { emailArr, startDate, endDate, description, location, summary  , eventId} =
-    req.body;
+  let {
+    emailArr,
+    startDate,
+    endDate,
+    description,
+    location,
+    summary,
+    eventId,
+  } = req.body;
 
   try {
     // oAuth2Client.setCredentials({
